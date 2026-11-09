@@ -1,0 +1,1830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Which Team Are You In? — English Lesson Team Maker</title>
+  <style>
+    :root {
+      --bg-top: #04091a;
+      --bg-mid: #0c1938;
+      --bg-bot: #19305c;
+      --winter-color: #7dd3fc;
+      --winter-glow: rgba(125, 211, 252, 0.45);
+      --summer-color: #fde047;
+      --summer-glow: rgba(253, 224, 71, 0.45);
+      --autumn-color: #fb923c;
+      --autumn-glow: rgba(251, 146, 60, 0.45);
+      --spring-color: #86efac;
+      --spring-glow: rgba(134, 239, 172, 0.45);
+      --all-color: #e9d5ff;
+      --all-glow: rgba(233, 213, 255, 0.45);
+      --glass-bg: rgba(15, 28, 58, 0.62);
+      --glass-border: rgba(255, 255, 255, 0.22);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100vh;
+      overflow-x: hidden;
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 55%, var(--bg-bot) 100%);
+      color: #ffffff;
+    }
+
+    /* Background & FX Canvases */
+    #bgCanvas, #fxCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    #bgCanvas {
+      z-index: 1;
+    }
+
+    #fxCanvas {
+      z-index: 25;
+    }
+
+    /* Ambient Moon & Aurora Glow */
+    .sky-decor {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .moon {
+      position: absolute;
+      top: 6%;
+      right: 8%;
+      width: 85px;
+      height: 85px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fffef0 0%, #fef08a 60%, #facc15 100%);
+      box-shadow: 0 0 50px 15px rgba(254, 240, 138, 0.35), 0 0 120px 40px rgba(125, 211, 252, 0.2);
+      opacity: 0.92;
+    }
+
+    /* Main Layout Container */
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 100vh;
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 0 1.25rem;
+    }
+
+    /* Header & Friendly Title */
+    header {
+      text-align: center;
+      margin-bottom: 1rem;
+      position: relative;
+      z-index: 20;
+    }
+
+    .main-title {
+      font-size: clamp(2rem, 5vw, 3.6rem);
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      color: #ffffff;
+      text-shadow: 
+        0 4px 18px rgba(0, 0, 0, 0.5),
+        0 0 28px rgba(125, 211, 252, 0.65);
+      line-height: 1.15;
+      margin-bottom: 0.35rem;
+      animation: floatTitle 4s ease-in-out infinite;
+    }
+
+    .subtitle {
+      font-size: clamp(0.95rem, 2vw, 1.2rem);
+      color: #bae6fd;
+      font-weight: 500;
+      opacity: 0.9;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+
+    @keyframes floatTitle {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+    }
+
+    /* Action Bar (Top Controls when teams are made) */
+    .top-controls {
+      display: flex;
+      justify-content: center;
+      gap: 0.85rem;
+      margin-top: 0.85rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.07));
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.05rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .btn:hover {
+      transform: translateY(-3px) scale(1.03);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.14));
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4), 0 0 20px rgba(125, 211, 252, 0.5);
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .btn:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
+      border-color: #bae6fd;
+      font-size: 1.2rem;
+      padding: 0.9rem 2.2rem;
+      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.5), inset 0 2px 2px rgba(255, 255, 255, 0.5);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #7dd3fc 0%, #3b82f6 100%);
+      box-shadow: 0 14px 32px rgba(56, 189, 248, 0.65), 0 0 25px rgba(125, 211, 252, 0.7);
+    }
+
+    /* Center Stage Area */
+    .stage-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 1rem 0 2rem 0;
+      min-height: 360px;
+      z-index: 15;
+    }
+
+    /* Setup Modal / Card */
+    .setup-panel {
+      width: 100%;
+      max-width: 540px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 28px;
+      padding: 1.75rem 2rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.25);
+      text-align: center;
+      animation: cardPopIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .setup-label {
+      display: block;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #e0f2fe;
+      margin-bottom: 0.5rem;
+    }
+
+    .setup-hint {
+      font-size: 0.9rem;
+      color: #93c5fd;
+      margin-bottom: 1rem;
+    }
+
+    .names-textarea {
+      width: 100%;
+      height: 210px;
+      background: rgba(5, 13, 33, 0.65);
+      border: 2px solid rgba(125, 211, 252, 0.35);
+      border-radius: 18px;
+      padding: 1rem 1.2rem;
+      color: #ffffff;
+      font-size: 1.05rem;
+      line-height: 1.5;
+      font-family: inherit;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.25s, box-shadow 0.25s;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .names-textarea::placeholder {
+      color: rgba(186, 230, 253, 0.45);
+    }
+
+    .names-textarea:focus {
+      border-color: #7dd3fc;
+      box-shadow: 0 0 20px rgba(125, 211, 252, 0.3);
+    }
+
+    .setup-footer {
+      margin-top: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .count-badge {
+      font-size: 0.88rem;
+      color: #bae6fd;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.25rem 0.85rem;
+      border-radius: 99px;
+    }
+
+    /* Prompt message before clicking a snowdrift */
+    .prompt-banner {
+      background: rgba(15, 28, 58, 0.55);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px dashed rgba(186, 230, 253, 0.45);
+      padding: 1.4rem 2.2rem;
+      border-radius: 24px;
+      text-align: center;
+      max-width: 520px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+      animation: gentlePulse 2.8s ease-in-out infinite;
+    }
+
+    .prompt-banner h2 {
+      font-size: 1.5rem;
+      color: #f0f9ff;
+      margin-bottom: 0.4rem;
+    }
+
+    .prompt-banner p {
+      font-size: 1.05rem;
+      color: #bae6fd;
+    }
+
+    @keyframes gentlePulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25); }
+      50% { transform: scale(1.02); box-shadow: 0 16px 40px rgba(125, 211, 252, 0.22); }
+    }
+
+    /* 12 Snowdrifts Interactive Grid */
+    .twelve-drifts-stage {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+      z-index: 20;
+    }
+
+    .drifts-grid-12 {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2.2rem 1.25rem;
+      padding: 2rem 0.5rem 0.75rem 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .child-drift-slot {
+      position: relative;
+      height: 155px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    /* Card that rises out of the individual snowdrift when stepped on */
+    .slot-rising-card {
+      position: relative;
+      z-index: 6;
+      width: 94%;
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 2px solid var(--slot-color, #7dd3fc);
+      border-radius: 20px;
+      padding: 0.65rem 0.6rem;
+      margin-bottom: -14px;
+      text-align: center;
+      box-shadow: 
+        0 14px 28px rgba(0, 0, 0, 0.5),
+        0 0 25px var(--slot-glow, rgba(125, 211, 252, 0.45)),
+        inset 0 1px 2px rgba(255, 255, 255, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(65px) scale(0.55);
+    }
+
+    /* 12 Falling Snowflakes Interactive Grid */
+    .twelve-drifts-stage {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+      z-index: 20;
+    }
+
+    .drifts-grid-12 {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem 1.5rem;
+      padding: 1.5rem 0.5rem;
+      margin-top: 0.25rem;
+      justify-items: center;
+    }
+
+    .child-drift-slot {
+      position: relative;
+      width: 155px;
+      height: 155px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: floatFallingSnow 4.2s ease-in-out infinite;
+      animation-delay: var(--float-delay, 0s);
+    }
+
+    @keyframes floatFallingSnow {
+      0%, 100% {
+        transform: translateY(-10px) translateX(-4px) rotate(-4deg);
+      }
+      50% {
+        transform: translateY(12px) translateX(5px) rotate(5deg);
+      }
+    }
+
+    /* Card that pops out when the snowflake is clicked */
+    .slot-rising-card {
+      position: absolute;
+      inset: 6px;
+      z-index: 8;
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 2.5px solid var(--slot-color, #7dd3fc);
+      border-radius: 26px;
+      padding: 0.75rem 0.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: 
+        0 14px 32px rgba(0, 0, 0, 0.55),
+        0 0 30px var(--slot-glow, rgba(125, 211, 252, 0.55)),
+        inset 0 1px 2px rgba(255, 255, 255, 0.4);
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.35) rotate(-12deg);
+    }
+
+    .child-drift-slot.revealed .slot-rising-card {
+      pointer-events: auto;
+      animation: popOutSnow 0.6s cubic-bezier(0.22, 1.45, 0.5, 1) forwards;
+    }
+
+    @keyframes popOutSnow {
+      0% {
+        opacity: 0;
+        transform: scale(0.35) rotate(-12deg);
+      }
+      70% {
+        opacity: 1;
+        transform: scale(1.08) rotate(3deg);
+      }
+      85% {
+        transform: scale(0.97) rotate(-1deg);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+      }
+    }
+
+    .slot-season-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 1.45rem;
+      font-weight: 900;
+      color: var(--slot-color, #fff);
+      text-shadow: 0 2px 12px var(--slot-glow, rgba(255,255,255,0.45));
+    }
+
+    .slot-season-icon {
+      font-size: 2.7rem;
+      line-height: 1;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35));
+    }
+
+    /* The clickable falling snowflake crystal */
+    .child-mound-btn {
+      appearance: none;
+      border: none;
+      background: transparent;
+      width: 145px;
+      height: 145px;
+      position: relative;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      outline: none;
+      z-index: 4;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.35s, opacity 0.35s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .child-mound-btn:hover {
+      transform: scale(1.14) rotate(18deg);
+    }
+
+    .snowflake-crystal-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      filter: drop-shadow(0 0 14px rgba(186, 230, 253, 0.85)) drop-shadow(0 6px 14px rgba(0, 0, 0, 0.45));
+      animation: slowSpinFlake 18s linear infinite;
+    }
+
+    @keyframes slowSpinFlake {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .child-drift-slot.revealed .child-mound-btn {
+      opacity: 0.16;
+      transform: scale(0.75);
+      pointer-events: none;
+    }
+
+    .child-drift-slot.stepping .child-mound-btn {
+      animation: snowCrunch 0.42s cubic-bezier(0.25, 1.5, 0.5, 1);
+    }
+
+    /* Single Team Rising Card */
+    .team-display-container {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      perspective: 1000px;
+    }
+
+    .single-team-card {
+      width: 100%;
+      max-width: 500px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 2px solid var(--team-accent, #7dd3fc);
+      border-radius: 30px;
+      padding: 2rem 2.2rem;
+      box-shadow: 
+        0 24px 60px rgba(0, 0, 0, 0.55),
+        0 0 35px var(--team-glow, rgba(125, 211, 252, 0.35)),
+        inset 0 2px 3px rgba(255, 255, 255, 0.3);
+      transform-origin: bottom center;
+      animation: riseFromSnow 0.7s cubic-bezier(0.22, 1.35, 0.5, 1) forwards;
+      position: relative;
+      overflow: hidden;
+    }
+
+    @keyframes riseFromSnow {
+      0% {
+        opacity: 0;
+        transform: translateY(150px) scale(0.65);
+      }
+      70% {
+        opacity: 1;
+        transform: translateY(-10px) scale(1.03);
+      }
+      85% {
+        transform: translateY(4px) scale(0.99);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .team-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .team-icon-large {
+      font-size: 2.75rem;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));
+      animation: iconSpinBounce 2.5s ease-in-out infinite;
+    }
+
+    @keyframes iconSpinBounce {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-6px) rotate(8deg); }
+    }
+
+    .team-title-large {
+      font-size: 2.1rem;
+      font-weight: 900;
+      color: var(--team-accent, #ffffff);
+      text-shadow: 0 2px 12px var(--team-glow, rgba(255,255,255,0.3));
+    }
+
+    .children-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    /* Individual Child Name Pill with Cascade Bounce */
+    .child-item {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.06) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-left: 6px solid var(--team-accent, #7dd3fc);
+      border-radius: 18px;
+      padding: 1rem 1.35rem;
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+      opacity: 0;
+      transform: translateY(35px) scale(0.8);
+      animation: childBounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .child-item .child-number {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--team-accent, #bae6fd);
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.25rem 0.65rem;
+      border-radius: 99px;
+    }
+
+    @keyframes childBounceIn {
+      0% {
+        opacity: 0;
+        transform: translateY(40px) scale(0.75);
+      }
+      65% {
+        opacity: 1;
+        transform: translateY(-7px) scale(1.04);
+      }
+      85% {
+        transform: translateY(3px) scale(0.98);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* All Teams 4-Column / Responsive Grid */
+    .all-teams-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.15rem;
+      align-items: stretch;
+    }
+
+    .mini-team-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 2px solid var(--team-accent, #7dd3fc);
+      border-radius: 24px;
+      padding: 1.25rem 1.1rem;
+      box-shadow: 
+        0 16px 36px rgba(0, 0, 0, 0.45),
+        0 0 22px var(--team-glow, rgba(125, 211, 252, 0.25));
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      opacity: 0;
+      transform-origin: bottom center;
+      animation: riseFromSnow 0.65s cubic-bezier(0.22, 1.35, 0.5, 1) forwards;
+    }
+
+    .mini-team-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding-bottom: 0.65rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .mini-team-header .icon {
+      font-size: 1.75rem;
+    }
+
+    .mini-team-header .name {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--team-accent, #fff);
+    }
+
+    .mini-child-item {
+      background: rgba(255, 255, 255, 0.13);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-left: 4px solid var(--team-accent, #fff);
+      border-radius: 14px;
+      padding: 0.7rem 0.9rem;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      opacity: 0;
+      transform: translateY(25px) scale(0.8);
+      animation: childBounceIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .mini-child-item .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--team-accent, #fff);
+      box-shadow: 0 0 8px var(--team-accent, #fff);
+      flex-shrink: 0;
+    }
+
+    /* Bottom Snowdrifts Area */
+    .snowdrifts-section {
+      position: relative;
+      width: 100vw;
+      margin-left: calc(-50vw + 50%);
+      padding-top: 2.2rem;
+      z-index: 20;
+      overflow: hidden;
+    }
+
+    /* Continuous snowy ground layer behind the mounds */
+    .snow-ground-backdrop {
+      position: absolute;
+      bottom: 0;
+      left: -5%;
+      width: 110%;
+      height: 65px;
+      background: linear-gradient(180deg, #dbeafe 0%, #bfdbfe 45%, #93c5fd 100%);
+      border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+      box-shadow: 0 -10px 35px rgba(186, 230, 253, 0.35);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .snowdrifts-row {
+      position: relative;
+      z-index: 5;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 0.75rem;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.65rem;
+      align-items: end;
+    }
+
+    /* Individual Interactive Snowdrift Mound */
+    .snowdrift-btn {
+      appearance: none;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+      height: 135px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 1.1rem;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Mound Shape */
+    .mound-shape {
+      position: absolute;
+      bottom: -18px;
+      left: -6%;
+      width: 112%;
+      height: 135px;
+      border-radius: 52% 48% 20% 20% / 78% 82% 15% 15%;
+      background: radial-gradient(circle at 50% 22%, #ffffff 0%, #eff6ff 48%, #dbeafe 78%, #93c5fd 100%);
+      box-shadow: 
+        0 -6px 22px rgba(255, 255, 255, 0.55),
+        inset 0 8px 16px #ffffff,
+        inset 0 -14px 24px rgba(59, 130, 246, 0.28);
+      transition: all 0.3s ease;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    /* Subtle colored seasonal shimmer on top of each drift */
+    .mound-shape::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 0%, var(--drift-tint, transparent) 0%, transparent 70%);
+      opacity: 0.45;
+      transition: opacity 0.3s;
+    }
+
+    .snowdrift-btn:hover {
+      transform: translateY(-7px);
+    }
+
+    .snowdrift-btn:hover .mound-shape {
+      box-shadow: 
+        0 -10px 30px var(--drift-glow, rgba(255, 255, 255, 0.8)),
+        inset 0 10px 20px #ffffff,
+        inset 0 -10px 20px rgba(59, 130, 246, 0.25);
+    }
+
+    .snowdrift-btn:hover .mound-shape::before {
+      opacity: 0.8;
+    }
+
+    /* Active / Stepped-on Snowdrift State */
+    .snowdrift-btn.active {
+      transform: translateY(3px);
+    }
+
+    .snowdrift-btn.active .mound-shape {
+      background: radial-gradient(circle at 50% 30%, #f8fafc 0%, #e0f2fe 50%, #bae6fd 85%, #7dd3fc 100%);
+      box-shadow: 
+        0 -8px 35px var(--drift-glow, rgba(125, 211, 252, 0.9)),
+        inset 0 12px 24px rgba(15, 23, 42, 0.18),
+        inset 0 -8px 18px rgba(37, 99, 235, 0.35);
+    }
+
+    /* Step Compression Squish Animation */
+    .snowdrift-btn.stepping .mound-shape {
+      animation: snowCrunch 0.42s cubic-bezier(0.25, 1.5, 0.5, 1);
+    }
+
+    @keyframes snowCrunch {
+      0% { transform: scaleY(1) scaleX(1); }
+      35% { transform: scaleY(0.84) scaleX(1.06); }
+      70% { transform: scaleY(1.03) scaleX(0.99); }
+      100% { transform: scaleY(1) scaleX(1); }
+    }
+
+    /* Footprints in the Snow */
+    .footprints-wrap {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90px;
+      height: 46px;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .snowdrift-btn.stepped .footprints-wrap {
+      opacity: 1;
+    }
+
+    .footprint-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .print-left, .print-right {
+      fill: #93c5fd;
+      filter: drop-shadow(0 1px 0px #ffffff) drop-shadow(0 -1px 2px rgba(30, 58, 138, 0.35));
+      opacity: 0;
+      transform-origin: center;
+    }
+
+    .snowdrift-btn.stepped .print-left {
+      animation: stampPrint 0.28s ease-out 0.03s forwards;
+    }
+
+    .snowdrift-btn.stepped .print-right {
+      animation: stampPrint 0.28s ease-out 0.16s forwards;
+    }
+
+    @keyframes stampPrint {
+      0% {
+        opacity: 0;
+        transform: scale(1.35);
+      }
+      100% {
+        opacity: 0.85;
+        transform: scale(1);
+      }
+    }
+
+    /* Snowdrift Text Label & Season Badge */
+    .drift-content {
+      position: relative;
+      z-index: 4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.15rem;
+      pointer-events: none;
+    }
+
+    .drift-icon {
+      font-size: 1.7rem;
+      line-height: 1;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.18));
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .snowdrift-btn:hover .drift-icon {
+      transform: scale(1.2) rotate(-6deg);
+    }
+
+    .drift-title {
+      font-size: clamp(0.95rem, 1.6vw, 1.22rem);
+      font-weight: 900;
+      color: #0f172a;
+      letter-spacing: 0.2px;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .drift-sub {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #334155;
+      background: rgba(255, 255, 255, 0.65);
+      padding: 0.1rem 0.55rem;
+      border-radius: 99px;
+    }
+
+    /* Disabled snowdrifts during initial setup */
+    .snowdrifts-section.disabled-state {
+      opacity: 0.55;
+      pointer-events: none;
+      filter: grayscale(0.25);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Responsive Breakpoints */
+    @media (max-width: 980px) {
+      .all-teams-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .drifts-grid-12 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 680px) {
+      .app-wrapper {
+        padding: 1rem 0.85rem 0 0.85rem;
+      }
+
+      .drifts-grid-12 {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem 0.75rem;
+      }
+
+      .snowdrifts-row {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.45rem;
+      }
+
+      .snowdrift-btn {
+        height: 110px;
+        padding-bottom: 0.7rem;
+      }
+
+      .mound-shape {
+        height: 112px;
+      }
+
+      /* Make "All Teams" span 2 columns on mobile bottom row */
+      .snowdrift-btn[data-team="all"] {
+        grid-column: span 2;
+      }
+
+      .all-teams-grid {
+        grid-template-columns: 1fr;
+        gap: 0.9rem;
+      }
+
+      .single-team-card {
+        padding: 1.4rem 1.25rem;
+      }
+
+      .child-item {
+        font-size: 1.25rem;
+        padding: 0.85rem 1.1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Decorative Moon in the Winter Night Sky -->
+  <div class="sky-decor">
+    <div class="moon"></div>
+  </div>
+
+  <!-- Background Snowfall Canvas -->
+  <canvas id="bgCanvas"></canvas>
+
+  <!-- Foreground Seasonal & Snow Burst Particle Canvas -->
+  <canvas id="fxCanvas"></canvas>
+
+  <div class="app-wrapper">
+    <!-- Top Header -->
+    <header>
+      <h1 class="main-title">Which Team Are You In?</h1>
+      <p class="subtitle" id="headerSubtitle">Click on any falling snowflake to reveal your season!</p>
+
+      <!-- Action Buttons -->
+      <div class="top-controls" id="topControls">
+        <button class="btn" id="show12DriftsBtn" type="button" title="View all 12 falling snowflakes">
+          <span>❄️</span> 12 Snowflakes
+        </button>
+        <button class="btn" id="revealAll12Btn" type="button" title="Open all 12 snowflakes at once">
+          <span>✨</span> Open All 12
+        </button>
+        <button class="btn" id="shuffleBtn" type="button" title="Randomly reshuffle all 12 snowflakes">
+          <span>🔀</span> Shuffle Again
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Stage Area -->
+    <main class="stage-area" id="stageArea">
+
+      <!-- 12 Falling Snowflakes (Click each snowflake to reveal a random season!) -->
+      <section class="twelve-drifts-stage" id="twelveDriftsStage">
+        <div class="drifts-grid-12" id="driftsGrid12"></div>
+      </section>
+
+      <!-- Rising Team Card / All Teams Grid Container -->
+      <section class="team-display-container hidden" id="teamDisplayContainer"></section>
+
+    </main>
+
+    <!-- Bottom Interactive Snowdrifts -->
+    <footer class="snowdrifts-section" id="snowdriftsSection">
+      <div class="snow-ground-backdrop"></div>
+      <div class="snowdrifts-row" id="snowdriftsRow">
+        
+        <!-- Winter Snowdrift -->
+        <button class="snowdrift-btn" data-team="winter" style="--drift-tint: #38bdf8; --drift-glow: rgba(125, 211, 252, 0.85);" type="button">
+          <div class="mound-shape"></div>
+          <div class="footprints-wrap">
+            <svg class="footprint-svg" viewBox="0 0 90 46">
+              <!-- Left Boot Print -->
+              <g class="print-left" transform="translate(22, 18) rotate(-14)">
+                <ellipse cx="0" cy="-4" rx="7" ry="9.5" />
+                <ellipse cx="0" cy="10" rx="5.5" ry="5" />
+              </g>
+              <!-- Right Boot Print -->
+              <g class="print-right" transform="translate(64, 14) rotate(14)">
+                <ellipse cx="0" cy="-4" rx="7" ry="9.5" />
+                <ellipse cx="0" cy="10" rx="5.5" ry="5" />
+              </g>
+            </svg>
+          </div>
+          <div class="drift-content">
+            <span class="drift-icon">❄️</span>
+            <span class="drift-title">Winter</span>
+            <span class="drift-sub">3 Spots</span>
+          </div>
+        </button>
+
+        <!-- Summer Snowdrift -->
+        <button class="snowdrift-btn" data-team="summer" style="--drift-tint: #facc15; --drift-glow: rgba(253, 224, 71, 0.85);" type="button">
+          <div class="mound-shape"></div>
+          <div class="footprints-wrap">
+            <svg class="footprint-svg" viewBox="0 0 90 46">
+              <g class="print-left" transform="translate(22, 18) rotate(-14)">
+                <ellipse cx="0" cy="-4" rx="7" ry="9.5" />
+                <ellipse cx="0" cy="10" rx="5.5" ry="5" />
+              </g>
+              <g class="print-right" transform="translate(64, 14) rotate(14)">
+                <ellipse cx="0" cy="-4" rx="7" ry="9.5" />
+                <ellipse cx="0" cy="10" rx="5.5" ry="5" />
+              </g>
+            </svg>
+          </div>
+          <div class="drift-content">
+            <span class="drift-icon">☀️</span>
+            <span class="drift-title">Summer</span>
+            <span class="drift-sub">3 Spots</span>
+          </div>
+        </button>
+
+        <!-- Autumn Snowdrift -->
+        <button class="snowdrift-btn" data-team="autumn" style="--drift-tint: #fb923c; --drift-glow: rgba(251, 146, 60, 0.85);" type="button">
+          <div class="mound-shape"></div>
+          <div class="footprints-wrap">
+            <svg class="footprint-svg" viewBox="0 0 90 46">
+              <g class="print-left" transform="translate(22, 18) rotate(-14)">
+                <ellipse cx="0" cy="-4" rx="7" ry="9.5" />
+                <ellipse cx="0" cy="10" rx="5.5" ry="5" />
+              </g>
+              <g class="print-right" transform="translate(64, 14) rotate(14)">
+                <ellipse cx="0" cy="-4" rx="7" ry="9.5" />
+                <ellipse cx="0" cy="10" rx="5.5" ry="5" />
+              </g>
+            </svg>
+          </div>
+          <div class="drift-content">
+            <span class="drift-icon">🍂</span>
+            <span class="drift-title">Autumn</span>
+            <span class="drift-sub">3 Spots</span>
+          </div>
+        </button>
+
+        <!-- Spring Snowdrift -->
+        <button class="snowdrift-btn" data-team="spring" style="--drift-tint: #4ade80; --drift-glow: rgba(134, 239, 172, 0.85);" type="button">
+          <div class="mound-shape"></div>
+          <div class="footprints-wrap">
+            <svg class="footprint-svg" viewBox="0 0 90 46">
+              <g class="print-left" transform="translate(22, 18) rotate(-14)">
+                <ellipse cx="0" cy="-4" rx="7" ry="9.5" />
+                <ellipse cx="0" cy="10" rx="5.5" ry="5" />
+              </g>
+              <g class="print-right" transform="translate(64, 14) rotate(14)">
+                <ellipse cx="0" cy="-4" rx="7" ry="9.5" />
+                <ellipse cx="0" cy="10" rx="5.5" ry="5" />
+              </g>
+            </svg>
+          </div>
+          <div class="drift-content">
+            <span class="drift-icon">🌸</span>
+            <span class="drift-title">Spring</span>
+            <span class="drift-sub">3 Spots</span>
+          </div>
+        </button>
+
+        <!-- All Teams Snowdrift -->
+        <button class="snowdrift-btn" data-team="all" style="--drift-tint: #c084fc; --drift-glow: rgba(233, 213, 255, 0.9);" type="button">
+          <div class="mound-shape"></div>
+          <div class="footprints-wrap">
+            <svg class="footprint-svg" viewBox="0 0 90 46">
+              <g class="print-left" transform="translate(22, 18) rotate(-14)">
+                <ellipse cx="0" cy="-4" rx="7" ry="9.5" />
+                <ellipse cx="0" cy="10" rx="5.5" ry="5" />
+              </g>
+              <g class="print-right" transform="translate(64, 14) rotate(14)">
+                <ellipse cx="0" cy="-4" rx="7" ry="9.5" />
+                <ellipse cx="0" cy="10" rx="5.5" ry="5" />
+              </g>
+            </svg>
+          </div>
+          <div class="drift-content">
+            <span class="drift-icon">🌟</span>
+            <span class="drift-title">All Teams</span>
+            <span class="drift-sub">4 Groups × 3</span>
+          </div>
+        </button>
+
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    /**************************************************************
+     * 1. TEAM CONFIGURATION & APPLICATION STATE
+     **************************************************************/
+    const TEAM_CONFIG = {
+      winter: {
+        key: 'winter',
+        name: 'Winter',
+        shortName: 'Winter',
+        icon: '❄️',
+        color: '#7dd3fc',
+        glow: 'rgba(125, 211, 252, 0.45)'
+      },
+      summer: {
+        key: 'summer',
+        name: 'Summer',
+        shortName: 'Summer',
+        icon: '☀️',
+        color: '#fde047',
+        glow: 'rgba(253, 224, 71, 0.45)'
+      },
+      autumn: {
+        key: 'autumn',
+        name: 'Autumn',
+        shortName: 'Autumn',
+        icon: '🍂',
+        color: '#fb923c',
+        glow: 'rgba(251, 146, 60, 0.45)'
+      },
+      spring: {
+        key: 'spring',
+        name: 'Spring',
+        shortName: 'Spring',
+        icon: '🌸',
+        color: '#86efac',
+        glow: 'rgba(134, 239, 172, 0.45)'
+      }
+    };
+
+    const SEASON_KEYS = ['winter', 'summer', 'autumn', 'spring'];
+
+    let childAssignments = []; // 12 items: { index, season, revealed }
+    let assignedTeams = {
+      winter: [],
+      summer: [],
+      autumn: [],
+      spring: []
+    };
+    let activeSelection = null;
+
+    // DOM Elements
+    const show12DriftsBtn = document.getElementById('show12DriftsBtn');
+    const revealAll12Btn = document.getElementById('revealAll12Btn');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+    const headerSubtitle = document.getElementById('headerSubtitle');
+    const twelveDriftsStage = document.getElementById('twelveDriftsStage');
+    const driftsGrid12 = document.getElementById('driftsGrid12');
+    const teamDisplayContainer = document.getElementById('teamDisplayContainer');
+    const snowdriftsSection = document.getElementById('snowdriftsSection');
+    const snowdriftButtons = document.querySelectorAll('.snowdrift-btn');
+
+    /**************************************************************
+     * 2. FISHER-YATES TEAM SHUFFLING (3 OF EACH SEASON = 12)
+     **************************************************************/
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function splitIntoTeams() {
+      // Exact pool of 12 seasons: 3 Winter, 3 Summer, 3 Autumn, 3 Spring
+      const seasonPool = shuffleArray([
+        'winter', 'winter', 'winter',
+        'summer', 'summer', 'summer',
+        'autumn', 'autumn', 'autumn',
+        'spring', 'spring', 'spring'
+      ]);
+
+      assignedTeams = {
+        winter: [1, 2, 3],
+        summer: [1, 2, 3],
+        autumn: [1, 2, 3],
+        spring: [1, 2, 3]
+      };
+
+      childAssignments = seasonPool.map((season, idx) => ({
+        index: idx,
+        season,
+        revealed: false
+      }));
+    }
+
+    /**************************************************************
+     * 3. UI RENDERING (12 FALLING SNOWFLAKES & TEAM VIEWS)
+     **************************************************************/
+    function getSnowflakeCrystalSVG() {
+      let branches = '';
+      for (let angle = 0; angle < 360; angle += 60) {
+        branches += `
+          <g transform="rotate(${angle} 60 60)">
+            <line x1="60" y1="60" x2="60" y2="10" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/>
+            <polyline points="47,24 60,35 73,24" fill="none" stroke="#e0f2fe" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="50,39 60,48 70,39" fill="none" stroke="#bae6fd" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="60" cy="9" r="3.5" fill="#ffffff"/>
+          </g>
+        `;
+      }
+      return `
+        <svg class="snowflake-crystal-svg" viewBox="0 0 120 120">
+          ${branches}
+          <polygon points="60,45 73,52.5 73,67.5 60,75 47,67.5 47,52.5" fill="rgba(186, 230, 253, 0.35)" stroke="#ffffff" stroke-width="3"/>
+          <circle cx="60" cy="60" r="5" fill="#ffffff"/>
+        </svg>
+      `;
+    }
+
+    function renderTwelveSnowdrifts() {
+      const crystalSVG = getSnowflakeCrystalSVG();
+      driftsGrid12.innerHTML = childAssignments.map((item, idx) => {
+        const cfg = TEAM_CONFIG[item.season];
+        const revealedClass = item.revealed ? 'revealed' : '';
+        const floatDelay = ((idx * 0.37) % 2.8).toFixed(2);
+        return `
+          <div class="child-drift-slot ${revealedClass}" id="childSlot-${idx}" style="--slot-color: ${cfg.color}; --slot-glow: ${cfg.glow}; --float-delay: -${floatDelay}s;">
+            <div class="slot-rising-card">
+              <div class="slot-season-badge">
+                <span class="slot-season-icon">${cfg.icon}</span>
+                <span>${cfg.shortName}</span>
+              </div>
+            </div>
+            <button class="child-mound-btn" data-index="${idx}" type="button" aria-label="Snowflake">
+              ${crystalSVG}
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      const moundBtns = driftsGrid12.querySelectorAll('.child-mound-btn');
+      moundBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.index, 10);
+          triggerChildSnowdriftStep(idx, btn);
+        });
+      });
+    }
+
+    function triggerChildSnowdriftStep(idx, btnEl) {
+      const item = childAssignments[idx];
+      if (!item) return;
+
+      const slotEl = document.getElementById(`childSlot-${idx}`);
+      const cfg = TEAM_CONFIG[item.season];
+      item.revealed = true;
+      activeSelection = item.season;
+
+      if (slotEl) {
+        slotEl.classList.remove('stepping');
+        void slotEl.offsetWidth;
+        slotEl.classList.add('stepping', 'revealed');
+      }
+
+      if (btnEl) {
+        const rect = btnEl.getBoundingClientRect();
+        spawnSnowBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, cfg.color, 38);
+      }
+    }
+
+    function renderSingleTeamCard(teamKey) {
+      const cfg = TEAM_CONFIG[teamKey];
+      const members = assignedTeams[teamKey];
+
+      teamDisplayContainer.innerHTML = `
+        <div class="single-team-card" id="activeCardBox" style="--team-accent: ${cfg.color}; --team-glow: ${cfg.glow};">
+          <div class="team-card-header">
+            <span class="team-icon-large">${cfg.icon}</span>
+            <h2 class="team-title-large">${cfg.name}</h2>
+          </div>
+          <div class="children-list">
+            ${members.map((_, idx) => `
+              <div class="child-item" style="animation-delay: ${0.15 + idx * 0.14}s;">
+                <span>${cfg.icon} ${cfg.shortName}</span>
+                <span class="child-number">#${idx + 1}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAllTeamsGrid() {
+      let cardsHTML = '';
+      SEASON_KEYS.forEach((teamKey, teamIdx) => {
+        const cfg = TEAM_CONFIG[teamKey];
+        const members = assignedTeams[teamKey];
+        const cardDelay = teamIdx * 0.1;
+
+        const childrenHTML = members.map((_, memberIdx) => {
+          const itemDelay = cardDelay + 0.18 + memberIdx * 0.1;
+          return `
+            <div class="mini-child-item" style="animation-delay: ${itemDelay}s;">
+              <span class="dot"></span>
+              <span>${cfg.icon} ${cfg.shortName}</span>
+            </div>
+          `;
+        }).join('');
+
+        cardsHTML += `
+          <div class="mini-team-card" style="--team-accent: ${cfg.color}; --team-glow: ${cfg.glow}; animation-delay: ${cardDelay}s;">
+            <div class="mini-team-header">
+              <span class="icon">${cfg.icon}</span>
+              <span class="name">${cfg.shortName}</span>
+            </div>
+            ${childrenHTML}
+          </div>
+        `;
+      });
+
+      teamDisplayContainer.innerHTML = `
+        <div class="all-teams-grid" id="activeCardBox">
+          ${cardsHTML}
+        </div>
+      `;
+    }
+
+    /**************************************************************
+     * 4. INTERACTIONS: SNOWFLAKE CLICK, REVEAL ALL, SHUFFLE
+     **************************************************************/
+    show12DriftsBtn.addEventListener('click', () => {
+      teamDisplayContainer.classList.add('hidden');
+      twelveDriftsStage.classList.remove('hidden');
+      snowdriftButtons.forEach(b => b.classList.remove('active'));
+      headerSubtitle.textContent = 'Click on any falling snowflake to reveal your season!';
+    });
+
+    revealAll12Btn.addEventListener('click', () => {
+      teamDisplayContainer.classList.add('hidden');
+      twelveDriftsStage.classList.remove('hidden');
+      snowdriftButtons.forEach(b => b.classList.remove('active'));
+
+      childAssignments.forEach((item, idx) => {
+        setTimeout(() => {
+          const slotEl = document.getElementById(`childSlot-${idx}`);
+          const btnEl = slotEl ? slotEl.querySelector('.child-mound-btn') : null;
+          triggerChildSnowdriftStep(idx, btnEl);
+        }, idx * 90);
+      });
+    });
+
+    shuffleBtn.addEventListener('click', () => {
+      splitIntoTeams();
+
+      // Trigger celebratory burst from the shuffle button
+      const rect = shuffleBtn.getBoundingClientRect();
+      spawnSnowBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, '#bae6fd', 28);
+
+      // Re-render the 12 falling snowflakes fresh
+      renderTwelveSnowdrifts();
+
+      // Reset footprints on bottom drifts
+      snowdriftButtons.forEach(btn => {
+        btn.classList.remove('stepped', 'active');
+      });
+
+      teamDisplayContainer.classList.add('hidden');
+      twelveDriftsStage.classList.remove('hidden');
+      activeSelection = null;
+    });
+
+    snowdriftButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const chosenTeam = btn.dataset.team;
+        activeSelection = chosenTeam;
+
+        // Visual footprint + crunch animation on the clicked snowdrift
+        snowdriftButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.remove('stepping');
+        void btn.offsetWidth;
+        btn.classList.add('active', 'stepped', 'stepping');
+
+        // Spawn snow burst particles right where the user stepped on the drift
+        const rect = btn.getBoundingClientRect();
+        const burstX = rect.left + rect.width / 2;
+        const burstY = rect.top + 28;
+        const tintColor = chosenTeam === 'all' ? '#e9d5ff' : TEAM_CONFIG[chosenTeam].color;
+        spawnSnowBurst(burstX, burstY, tintColor, 42);
+
+        // Hide 12 snowflakes view and display the rising team summary card(s)
+        twelveDriftsStage.classList.add('hidden');
+        teamDisplayContainer.classList.remove('hidden');
+
+        if (chosenTeam === 'all') {
+          renderAllTeamsGrid();
+        } else {
+          renderSingleTeamCard(chosenTeam);
+        }
+      });
+    });
+
+    /**************************************************************
+     * 5. CANVAS 1: WINTER NIGHT SKY & FALLING SNOWFLAKES
+     **************************************************************/
+    const bgCanvas = document.getElementById('bgCanvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    let bgWidth = window.innerWidth;
+    let bgHeight = window.innerHeight;
+
+    const stars = [];
+    const snowflakes = [];
+    const STAR_COUNT = 65;
+    const SNOWFLAKE_COUNT = 120;
+
+    function initBackgroundElements() {
+      bgWidth = window.innerWidth;
+      bgHeight = window.innerHeight;
+      bgCanvas.width = bgWidth;
+      bgCanvas.height = bgHeight;
+
+      stars.length = 0;
+      for (let i = 0; i < STAR_COUNT; i++) {
+        stars.push({
+          x: Math.random() * bgWidth,
+          y: Math.random() * (bgHeight * 0.65),
+          r: Math.random() * 1.4 + 0.4,
+          alpha: Math.random() * 0.7 + 0.2,
+          twinkleSpeed: Math.random() * 0.02 + 0.006,
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+
+      snowflakes.length = 0;
+      for (let i = 0; i < SNOWFLAKE_COUNT; i++) {
+        snowflakes.push(createBackgroundSnowflake(true));
+      }
+    }
+
+    function createBackgroundSnowflake(randomY = false) {
+      const radius = Math.random() * 3.4 + 1.0;
+      return {
+        x: Math.random() * bgWidth,
+        y: randomY ? Math.random() * bgHeight : -10 - Math.random() * 30,
+        r: radius,
+        speedY: radius * 0.35 + Math.random() * 0.45,
+        swayAmp: Math.random() * 0.7 + 0.25,
+        swayFreq: Math.random() * 0.018 + 0.006,
+        phase: Math.random() * Math.PI * 2,
+        opacity: Math.min(0.92, radius / 4.2 + 0.25)
+      };
+    }
+
+    /**************************************************************
+     * 6. CANVAS 2: SNOW BURSTS & SEASONAL FLOATING PARTICLES
+     **************************************************************/
+    const fxCanvas = document.getElementById('fxCanvas');
+    const fxCtx = fxCanvas.getContext('2d');
+
+    const burstParticles = [];
+    const seasonalParticles = [];
+
+    function resizeCanvases() {
+      bgWidth = window.innerWidth;
+      bgHeight = window.innerHeight;
+      bgCanvas.width = bgWidth;
+      bgCanvas.height = bgHeight;
+      fxCanvas.width = bgWidth;
+      fxCanvas.height = bgHeight;
+    }
+
+    window.addEventListener('resize', resizeCanvases);
+
+    // Spawn snow burst when stepping on a snowdrift
+    function spawnSnowBurst(x, y, accentColor, count = 40) {
+      for (let i = 0; i < count; i++) {
+        const angle = -Math.PI + (Math.random() * Math.PI); // Upward hemisphere
+        const speed = Math.random() * 8.5 + 2.5;
+        const isTinted = Math.random() < 0.35;
+        burstParticles.push({
+          x: x + (Math.random() - 0.5) * 60,
+          y: y + (Math.random() - 0.5) * 14,
+          vx: Math.cos(angle) * speed * (Math.random() * 0.8 + 0.5),
+          vy: Math.sin(angle) * speed - Math.random() * 2.5,
+          gravity: 0.22,
+          r: Math.random() * 4.5 + 2,
+          color: isTinted ? accentColor : '#ffffff',
+          alpha: 1,
+          decay: Math.random() * 0.016 + 0.012
+        });
+      }
+    }
+
+    // Create a seasonal particle floating around the active team card
+    function spawnSeasonalParticle(season) {
+      const cardEl = document.getElementById('activeCardBox');
+      let rect;
+      if (cardEl) {
+        rect = cardEl.getBoundingClientRect();
+      } else {
+        rect = {
+          left: bgWidth * 0.25,
+          right: bgWidth * 0.75,
+          top: bgHeight * 0.25,
+          bottom: bgHeight * 0.7,
+          width: bgWidth * 0.5,
+          height: bgHeight * 0.45
+        };
+      }
+
+      // Spawn around the perimeter or gently over the card area
+      const pad = 45;
+      const x = rect.left - pad + Math.random() * (rect.width + pad * 2);
+      const y = rect.top - pad + Math.random() * (rect.height + pad * 2);
+
+      const actualSeason = season === 'all'
+        ? SEASON_KEYS[Math.floor(Math.random() * SEASON_KEYS.length)]
+        : season;
+
+      if (actualSeason === 'winter') {
+        seasonalParticles.push({
+          type: 'winter',
+          x,
+          y,
+          vx: (Math.random() - 0.5) * 0.8,
+          vy: Math.random() * 0.8 + 0.3,
+          size: Math.random() * 6 + 6,
+          rot: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 0.03,
+          alpha: 0,
+          maxAlpha: Math.random() * 0.45 + 0.5,
+          life: 0,
+          maxLife: Math.random() * 90 + 90,
+          color: Math.random() > 0.4 ? '#bae6fd' : '#ffffff'
+        });
+      } else if (actualSeason === 'summer') {
+        seasonalParticles.push({
+          type: 'summer',
+          x,
+          y: y + 20,
+          vx: (Math.random() - 0.5) * 0.9,
+          vy: -(Math.random() * 1.1 + 0.35), // Sparks float upward
+          size: Math.random() * 5 + 4,
+          rot: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 0.05,
+          alpha: 0,
+          maxAlpha: Math.random() * 0.5 + 0.5,
+          life: 0,
+          maxLife: Math.random() * 80 + 70,
+          color: Math.random() > 0.35 ? '#fde047' : '#fb923c'
+        });
+      } else if (actualSeason === 'autumn') {
+        const leafColors = ['#fb923c', '#f97316', '#ef4444', '#eab308'];
+        seasonalParticles.push({
+          type: 'autumn',
+          x,
+          y: y - 20,
+          vx: (Math.random() - 0.5) * 1.2,
+          vy: Math.random() * 1.1 + 0.45,
+          swayPhase: Math.random() * Math.PI * 2,
+          size: Math.random() * 6 + 6,
+          rot: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 0.05,
+          alpha: 0,
+          maxAlpha: Math.random() * 0.45 + 0.5,
+          life: 0,
+          maxLife: Math.random() * 100 + 90,
+          color: leafColors[Math.floor(Math.random() * leafColors.length)]
+        });
+      } else if (actualSeason === 'spring') {
+        const petalColors = ['#f9a8d4', '#f472b6', '#fbcfe8', '#86efac'];
+        seasonalParticles.push({
+          type: 'spring',
+          x,
+          y: y - 10,
+          vx: (Math.random() - 0.5) * 1.0,
+          vy: Math.random() * 0.85 + 0.3,
+          swayPhase: Math.random() * Math.PI * 2,
+          size: Math.random() * 5.5 + 5,
+          rot: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 0.04,
+          alpha: 0,
+          maxAlpha: Math.random() * 0.45 + 0.5,
+          life: 0,
+          maxLife: Math.random() * 95 + 85,
+          color: petalColors[Math.floor(Math.random() * petalColors.length)]
+        });
+      }
+    }
+
+    // Custom Canvas Vector Renderers for Each Season's Particle
+    function drawSnowflakeCrystal(ctx, size, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.6;
+      ctx.lineCap = 'round';
+      for (let i = 0; i < 6; i++) {
+        ctx.save();
+        ctx.rotate((Math.PI / 3) * i);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -size);
+        // Little branch ticks
+        ctx.moveTo(0, -size * 0.55);
+        ctx.lineTo(-size * 0.28, -size * 0.78);
+        ctx.moveTo(0, -size * 0.55);
+        ctx.lineTo(size * 0.28, -size * 0.78);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    function drawSunSpark(ctx, size, color) {
+      ctx.fillStyle = color;
+      ctx.shadowColor = '#fde047';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      const spikes = 4;
+      const outerR = size * 1.3;
+      const innerR = size * 0.38;
+      for (let i = 0; i < spikes * 2; i++) {
+        const r = i % 2 === 0 ? outerR : innerR;
+        const angle = (i * Math.PI) / spikes;
+        const px = Math.cos(angle) * r;
+        const py = Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawAutumnLeaf(ctx, size, color) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(0, -size);
+      ctx.quadraticCurveTo(size * 0.95, -size * 0.25, 0, size);
+      ctx.quadraticCurveTo(-size * 0.95, -size * 0.25, 0, -size);
+      ctx.closePath();
+      ctx.fill();
+
+      // Center leaf vein
+      ctx.strokeStyle = 'rgba(124, 45, 18, 0.55)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, -size * 0.75);
+      ctx.lineTo(0, size * 0.85);
+      ctx.stroke();
+    }
+
+    function drawSpringPetal(ctx, size, color) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(0, size * 0.85);
+      ctx.bezierCurveTo(-size * 0.95, size * 0.2, -size * 0.85, -size * 0.85, 0, -size * 0.45);
+      ctx.bezierCurveTo(size * 0.85, -size * 0.85, size * 0.95, size * 0.2, 0, size * 0.85);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    /**************************************************************
+     * 7. MAIN ANIMATION LOOP
+     **************************************************************/
+    function animate() {
+      // 1. Render Background Sky Stars & Falling Snowflakes
+      bgCtx.clearRect(0, 0, bgWidth, bgHeight);
+
+      // Twinkling stars
+      for (let i = 0; i < stars.length; i++) {
+        const st = stars[i];
+        st.phase += st.twinkleSpeed;
+        const currentAlpha = st.alpha + Math.sin(st.phase) * 0.2;
+        bgCtx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.08, Math.min(0.95, currentAlpha))})`;
+        bgCtx.beginPath();
+        bgCtx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
+        bgCtx.fill();
+      }
+
+      // Gently swaying snowflakes
+      for (let i = 0; i < snowflakes.length; i++) {
+        const fl = snowflakes[i];
+        fl.phase += fl.swayFreq;
+        fl.y += fl.speedY;
+        fl.x += Math.sin(fl.phase) * fl.swayAmp;
+
+        if (fl.y > bgHeight + 12) {
+          snowflakes[i] = createBackgroundSnowflake(false);
+        }
+        if (fl.x > bgWidth + 10) fl.x = -10;
+        if (fl.x < -10) fl.x = bgWidth + 10;
+
+        bgCtx.fillStyle = `rgba(240, 249, 255, ${fl.opacity})`;
+        bgCtx.beginPath();
+        bgCtx.arc(fl.x, fl.y, fl.r, 0, Math.PI * 2);
+        bgCtx.fill();
+      }
+
+      // 2. Render Foreground Burst & Seasonal Particles
+      fxCtx.clearRect(0, 0, bgWidth, bgHeight);
+
+      // Update & draw snow burst particles
+      for (let i = burstParticles.length - 1; i >= 0; i--) {
+        const bp = burstParticles[i];
+        bp.x += bp.vx;
+        bp.y += bp.vy;
+        bp.vy += bp.gravity;
+        bp.alpha -= bp.decay;
+
+        if (bp.alpha <= 0) {
+          burstParticles.splice(i, 1);
+          continue;
+        }
+
+        fxCtx.save();
+        fxCtx.globalAlpha = Math.max(0, bp.alpha);
+        fxCtx.fillStyle = bp.color;
+        fxCtx.shadowColor = bp.color;
+        fxCtx.shadowBlur = 6;
+        fxCtx.beginPath();
+        fxCtx.arc(bp.x, bp.y, bp.r, 0, Math.PI * 2);
+        fxCtx.fill();
+        fxCtx.restore();
+      }
+
+      // Continuously spawn seasonal particles around the open team card
+      if (activeSelection && seasonalParticles.length < 36 && Math.random() < 0.45) {
+        spawnSeasonalParticle(activeSelection);
+      }
+
+      // Update & draw seasonal floating particles
+      for (let i = seasonalParticles.length - 1; i >= 0; i--) {
+        const sp = seasonalParticles[i];
+        sp.life++;
+
+        // Smooth fade in and fade out
+        if (sp.life < 20) {
+          sp.alpha = (sp.life / 20) * sp.maxAlpha;
+        } else if (sp.life > sp.maxLife - 25) {
+          sp.alpha = ((sp.maxLife - sp.life) / 25) * sp.maxAlpha;
+        } else {
+          sp.alpha = sp.maxAlpha;
+        }
+
+        if (sp.swayPhase !== undefined) {
+          sp.swayPhase += 0.04;
+          sp.x += sp.vx + Math.sin(sp.swayPhase) * 0.6;
+        } else {
+          sp.x += sp.vx;
+        }
+        sp.y += sp.vy;
+        sp.rot += sp.vRot;
+
+        if (sp.life >= sp.maxLife) {
+          seasonalParticles.splice(i, 1);
+          continue;
+        }
+
+        fxCtx.save();
+        fxCtx.globalAlpha = Math.max(0, sp.alpha);
+        fxCtx.translate(sp.x, sp.y);
+        fxCtx.rotate(sp.rot);
+
+        if (sp.type === 'winter') {
+          drawSnowflakeCrystal(fxCtx, sp.size, sp.color);
+        } else if (sp.type === 'summer') {
+          drawSunSpark(fxCtx, sp.size, sp.color);
+        } else if (sp.type === 'autumn') {
+          drawAutumnLeaf(fxCtx, sp.size, sp.color);
+        } else if (sp.type === 'spring') {
+          drawSpringPetal(fxCtx, sp.size, sp.color);
+        }
+
+        fxCtx.restore();
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // Start everything on window load
+    window.onload = function () {
+      initBackgroundElements();
+      resizeCanvases();
+      splitIntoTeams();
+      renderTwelveSnowdrifts();
+      animate();
+    };
+  </script>
+</body>
+</html>
